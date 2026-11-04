@@ -14,6 +14,9 @@ generated database types.
 Support requests and their row-level security policies are defined in
 `supabase/migrations/202611040001_add_support_requests.sql`.
 
+Student profile updates and role protection are defined in
+`supabase/migrations/202611060001_allow_student_profile_updates.sql`.
+
 ## Why the schema is relational
 
 The product contains relationships that should be enforced by the database:
@@ -48,6 +51,8 @@ Application profile linked one-to-one to `auth.users`.
 Important rule:
 
 New users always start as `student`. A browser must never be able to sign itself up as an admin.
+Students may update their own name, phone, and university, while a database trigger protects the
+profile ID and role from self-editing.
 
 ### providers
 

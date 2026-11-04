@@ -12,6 +12,8 @@ Home → search → Explore results → refine filters → property details → 
 4. If nothing matches, the user gets a useful empty state and a clear way to reset filters.
 5. Property details show current listing data and let students save a home, compare it later, or request an inspection.
 6. Students can track, reschedule, or cancel eligible inspection requests from their account.
+7. The student portal stores profile, saved-home, and inspection activity. A completed inspection
+   does not confirm a tenancy or reserve a room; reservation and gateway payment are deferred.
 
 ## Account recovery
 
