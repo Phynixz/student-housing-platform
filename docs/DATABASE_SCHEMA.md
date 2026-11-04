@@ -6,6 +6,14 @@ Migration file:
 
 `supabase/migrations/202610250001_initial_schema.sql`
 
+The checked-in migrations also include the marketplace inventory and property-draft RPC contract in
+`supabase/migrations/202611030001_align_marketplace_backend.sql`. This migration adds total room
+counts and inspection group sizes, then aligns property create/edit RPCs with the server actions and
+generated database types.
+
+Support requests and their row-level security policies are defined in
+`supabase/migrations/202611040001_add_support_requests.sql`.
+
 ## Why the schema is relational
 
 The product contains relationships that should be enforced by the database:
@@ -83,6 +91,12 @@ This supports the product promise that mandatory costs should be visible and not
 
 Stores references to files in Supabase Storage.
 
+Property photos use the public `property-images` bucket. Uploads are limited to
+JPEG, PNG, and WebP files up to 4 MiB; Storage policies allow providers to add
+or remove files only under their own draft or rejected property. Run the
+property-image storage migration in each Supabase project before enabling
+uploads.
+
 Identity/verification evidence must eventually use a private bucket separate from public property photography.
 
 ### amenities / property_amenities
@@ -110,6 +124,12 @@ or:
 ### reports
 
 Student/user reports about suspicious or inaccurate listings.
+
+### support_requests
+
+Authenticated student/provider questions stored for the support queue. Users can insert and read
+only their own requests; administrators can review and update request status. The support request
+stores the authenticated account email so the team can reply.
 
 ### verification_events
 
@@ -240,9 +260,14 @@ A provider cannot rewrite:
 - the selected room type
 - preferred date
 - phone number
+- occupant group size
 - note
 
 This prevents a provider from changing the meaning of a student's original request.
+
+Students can reschedule or cancel only their own active requests. Providers may confirm or decline
+requested inspections, then complete or decline confirmed inspections. These transitions are
+enforced by the database trigger as well as the application actions.
 
 
 ## Atomic property draft creation

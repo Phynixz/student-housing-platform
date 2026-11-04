@@ -5,12 +5,14 @@ import {
   approveProperty,
   rejectProperty,
   updatePropertyReportStatus,
+  updateSupportRequestStatus,
   verifyProvider,
 } from "@/app/admin/reviews/actions";
 import {
   getAdminPropertyReports,
   getPendingPropertyReviews,
   getPendingProviderVerifications,
+  getAdminSupportRequests,
 } from "@/lib/data/admin";
 import { propertyImagePublicUrl } from "@/lib/property-images";
 
@@ -37,13 +39,27 @@ function reportReasonLabel(value: string) {
   return labels[value] ?? value.replaceAll("_", " ");
 }
 
+function supportCategoryLabel(value: string) {
+  const labels: Record<string, string> = {
+    account: "Account",
+    property: "Property",
+    inspection: "Inspection",
+    payment: "Payment",
+    privacy: "Privacy",
+    other: "Other",
+  };
+
+  return labels[value] ?? value;
+}
+
 export default async function AdminReviewContent({
   searchParams,
 }: AdminReviewContentProps) {
-  const [properties, providersToVerify, reports, params] = await Promise.all([
+  const [properties, providersToVerify, reports, supportRequests, params] = await Promise.all([
     getPendingPropertyReviews(),
     getPendingProviderVerifications(),
     getAdminPropertyReports(),
+    getAdminSupportRequests(),
     searchParams,
   ]);
 
@@ -63,7 +79,7 @@ export default async function AdminReviewContent({
           </p>
         </div>
 
-        <div className="grid gap-2 text-sm sm:grid-cols-3">
+        <div className="grid gap-2 text-sm sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl bg-[var(--cream)] px-5 py-4">
             <span className="font-bold text-[var(--forest)]">
               {providersToVerify.length}
@@ -81,6 +97,12 @@ export default async function AdminReviewContent({
               {reports.length}
             </span>{" "}
             active {reports.length === 1 ? "report" : "reports"}
+          </div>
+          <div className="rounded-2xl bg-[var(--cream)] px-5 py-4">
+            <span className="font-bold text-[var(--forest)]">
+              {supportRequests.length}
+            </span>{" "}
+            active support {supportRequests.length === 1 ? "request" : "requests"}
           </div>
         </div>
       </div>
@@ -260,6 +282,93 @@ export default async function AdminReviewContent({
                     Verify {provider.provider_type === "agent" ? "agent" : "provider"}
                   </button>
                 </form>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="mt-12">
+        <div>
+          <p className="text-sm font-bold uppercase tracking-wide text-[var(--emerald)]">
+            Support desk
+          </p>
+          <h2 className="mt-2 text-3xl font-bold text-[var(--forest)]">
+            Student and provider requests
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">
+            Support messages are private account information. Use the supplied
+            email to reply, and only retain details needed to resolve the request.
+          </p>
+        </div>
+
+        {supportRequests.length === 0 ? (
+          <div className="mt-6 rounded-3xl border border-dashed border-[var(--border)] bg-white px-6 py-10 text-center">
+            <p className="text-sm text-[var(--muted)]">
+              There are no active support requests.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-6 grid gap-4">
+            {supportRequests.map((request) => (
+              <article
+                key={request.id}
+                className="rounded-3xl border border-[var(--border)] bg-white p-6"
+              >
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-[var(--cream)] px-3 py-1 text-xs font-bold text-[var(--forest)]">
+                        {supportCategoryLabel(request.category)}
+                      </span>
+                      <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold capitalize text-amber-900">
+                        {request.status.replaceAll("_", " ")}
+                      </span>
+                    </div>
+                    <h3 className="mt-3 text-xl font-bold text-[var(--forest)]">
+                      {request.subject}
+                    </h3>
+                    <a
+                      href={`mailto:${request.contact_email}`}
+                      className="mt-1 inline-flex text-sm font-semibold text-[var(--emerald)] underline underline-offset-4"
+                    >
+                      {request.contact_email}
+                    </a>
+                    <p className="mt-1 text-xs text-[var(--muted)]">
+                      Received{" "}
+                      {new Date(request.created_at).toLocaleDateString("en-NG")}
+                    </p>
+                    <p className="mt-4 whitespace-pre-line rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm leading-6 text-[var(--muted)]">
+                      {request.message}
+                    </p>
+                  </div>
+
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    {request.status === "open" ? (
+                      <form action={updateSupportRequestStatus}>
+                        <input type="hidden" name="requestId" value={request.id} />
+                        <input type="hidden" name="status" value="in_progress" />
+                        <button className="rounded-xl bg-[var(--forest)] px-4 py-2.5 text-sm font-semibold text-white">
+                          Start follow-up
+                        </button>
+                      </form>
+                    ) : null}
+                    <form action={updateSupportRequestStatus}>
+                      <input type="hidden" name="requestId" value={request.id} />
+                      <input type="hidden" name="status" value="resolved" />
+                      <button className="rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-semibold text-emerald-800">
+                        Resolve
+                      </button>
+                    </form>
+                    <form action={updateSupportRequestStatus}>
+                      <input type="hidden" name="requestId" value={request.id} />
+                      <input type="hidden" name="status" value="dismissed" />
+                      <button className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--muted)]">
+                        Dismiss
+                      </button>
+                    </form>
+                  </div>
+                </div>
               </article>
             ))}
           </div>

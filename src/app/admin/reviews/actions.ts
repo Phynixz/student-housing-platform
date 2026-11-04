@@ -218,3 +218,62 @@ export async function updatePropertyReportStatus(formData: FormData) {
         : "Report dismissed.",
   );
 }
+
+const allowedSupportStatuses = ["in_progress", "resolved", "dismissed"] as const;
+
+export async function updateSupportRequestStatus(formData: FormData) {
+  await requireAdmin();
+
+  const requestId = String(formData.get("requestId") ?? "").trim();
+  const nextStatus = String(formData.get("status") ?? "").trim();
+
+  if (
+    !requestId ||
+    !allowedSupportStatuses.includes(
+      nextStatus as (typeof allowedSupportStatuses)[number],
+    )
+  ) {
+    adminRedirect("Support request could not be updated.");
+  }
+
+  const requests = await supabaseAuthenticatedRest<
+    Array<{ id: string; status: "open" | "in_progress" | "resolved" | "dismissed" }>
+  >(
+    `support_requests?id=eq.${encodeURIComponent(
+      requestId,
+    )}&select=id,status&limit=1`,
+  );
+
+  const request = requests[0];
+  const canUpdate =
+    request?.status === "open" ||
+    (request?.status === "in_progress" &&
+      (nextStatus === "resolved" || nextStatus === "dismissed"));
+
+  if (!request || !canUpdate) {
+    adminRedirect("This support request is no longer active.");
+  }
+
+  const updated = await supabaseAuthenticatedRest<Array<{ id: string }>>(
+    `support_requests?id=eq.${encodeURIComponent(
+      requestId,
+    )}&status=eq.${request.status}&select=id`,
+    {
+      method: "PATCH",
+      prefer: "return=representation",
+      body: JSON.stringify({ status: nextStatus }),
+    },
+  );
+
+  if (updated.length === 0) {
+    adminRedirect("Support request could not be updated.");
+  }
+
+  adminRedirect(
+    nextStatus === "in_progress"
+      ? "Support request assigned for follow-up."
+      : nextStatus === "resolved"
+        ? "Support request marked resolved."
+        : "Support request dismissed.",
+  );
+}

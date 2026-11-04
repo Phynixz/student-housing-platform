@@ -11,8 +11,10 @@ import {
 import { getCurrentAccount } from "@/lib/data/account";
 import {
   resendSignupConfirmation,
+  requestPasswordRecovery,
   signInWithPassword,
   signUpWithPassword,
+  updateCurrentUserPassword,
 } from "@/lib/supabase/auth-server";
 import { safeNextPath } from "@/lib/supabase/auth-shared";
 
@@ -27,6 +29,24 @@ function loginRedirectUrl(
   });
 
   return `/login?${params.toString()}`;
+}
+
+function signupRedirectUrl(
+  type: "error" | "message",
+  message: string,
+  nextPath: string,
+  accountType?: string,
+) {
+  const params = new URLSearchParams({
+    [type]: message,
+    next: nextPath,
+  });
+
+  if (accountType === "provider" || accountType === "student") {
+    params.set("accountType", accountType);
+  }
+
+  return `/signup?${params.toString()}`;
 }
 
 function checkEmailRedirectUrl(
@@ -59,11 +79,11 @@ function dashboardForRole(role: "student" | "provider" | "admin" | null) {
   return "/account";
 }
 
-async function confirmationRedirectUrl(nextPath: string) {
+async function authRedirectUrl(path: string, nextPath: string) {
   const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
 
   if (configuredSiteUrl) {
-    const url = new URL("/auth/confirm", configuredSiteUrl);
+    const url = new URL(path, configuredSiteUrl);
     url.searchParams.set("next", nextPath);
     return url.toString();
   }
@@ -73,7 +93,7 @@ async function confirmationRedirectUrl(nextPath: string) {
     requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
 
   if (!host) {
-    return `http://localhost:3000/auth/confirm?next=${encodeURIComponent(nextPath)}`;
+    return `http://localhost:3000${path}?next=${encodeURIComponent(nextPath)}`;
   }
 
   const forwardedProtocol = requestHeaders.get("x-forwarded-proto");
@@ -83,7 +103,11 @@ async function confirmationRedirectUrl(nextPath: string) {
       ? "http"
       : "https");
 
-  return `${protocol}://${host}/auth/confirm?next=${encodeURIComponent(nextPath)}`;
+  return `${protocol}://${host}${path}?next=${encodeURIComponent(nextPath)}`;
+}
+
+async function confirmationRedirectUrl(nextPath: string) {
+  return authRedirectUrl("/auth/confirm", nextPath);
 }
 
 function submittedEmailError(email: string) {
@@ -196,7 +220,7 @@ export async function signup(formData: FormData) {
 
   if (accountType !== "student" && accountType !== "provider") {
     redirect(
-      loginRedirectUrl(
+      signupRedirectUrl(
         "error",
         "Choose whether you are looking for accommodation or listing accommodation.",
         requestedNextPath,
@@ -206,34 +230,37 @@ export async function signup(formData: FormData) {
 
   if (fullName.length < 2 || fullName.length > 100) {
     redirect(
-      loginRedirectUrl(
+      signupRedirectUrl(
         "error",
         "Enter your full name using 2 to 100 characters.",
         nextPath,
+        accountType,
       ),
     );
   }
 
   if (emailError) {
-    redirect(loginRedirectUrl("error", emailError, nextPath));
+    redirect(signupRedirectUrl("error", emailError, nextPath, accountType));
   }
 
   if (password.length < 8) {
     redirect(
-      loginRedirectUrl(
+      signupRedirectUrl(
         "error",
         "Use a password with at least 8 characters.",
         nextPath,
+        accountType,
       ),
     );
   }
 
   if (password !== confirmPassword) {
     redirect(
-      loginRedirectUrl(
+      signupRedirectUrl(
         "error",
         "The passwords do not match.",
         nextPath,
+        accountType,
       ),
     );
   }
@@ -249,10 +276,11 @@ export async function signup(formData: FormData) {
 
   if (error) {
     redirect(
-      loginRedirectUrl(
+      signupRedirectUrl(
         "error",
         friendlyAuthError(error, "signup"),
         nextPath,
+        accountType,
       ),
     );
   }
@@ -295,4 +323,73 @@ export async function resendConfirmation(formData: FormData) {
       "If an unconfirmed account exists for that address, a new confirmation email has been requested. Check your inbox and spam folder.",
     ),
   );
+}
+
+export async function requestPasswordReset(formData: FormData) {
+  const email = normalizeEmail(formData.get("email"));
+  const emailError = submittedEmailError(email);
+
+  if (emailError) {
+    redirect(`/auth/forgot-password?error=${encodeURIComponent(emailError)}`);
+  }
+
+  const redirectTo = await authRedirectUrl("/auth/recover", "/auth/reset-password");
+  let recoveryFailed = false;
+
+  try {
+    const { error } = await requestPasswordRecovery(email, redirectTo);
+    recoveryFailed = Boolean(error);
+  } catch {
+    recoveryFailed = true;
+  }
+
+  if (recoveryFailed) {
+    redirect(
+      "/auth/forgot-password?error=We+could+not+request+a+reset+right+now.+Try+again+shortly.",
+    );
+  }
+
+  redirect(
+    "/auth/forgot-password?message=If+an+account+exists+for+that+email%2C+a+password+reset+link+has+been+sent.",
+  );
+}
+
+export async function resetPassword(formData: FormData) {
+  const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (password.length < 8) {
+    redirect(
+      "/auth/reset-password?error=Use+a+password+with+at+least+8+characters.",
+    );
+  }
+
+  if (password !== confirmPassword) {
+    redirect("/auth/reset-password?error=The+passwords+do+not+match.");
+  }
+
+  const { user } = await getCurrentAccount();
+
+  if (!user) {
+    redirect(
+      "/auth/forgot-password?error=Your+reset+session+has+expired.+Request+a+new+link.",
+    );
+  }
+
+  let passwordUpdateFailed = false;
+
+  try {
+    const { error } = await updateCurrentUserPassword(password);
+    passwordUpdateFailed = Boolean(error);
+  } catch {
+    passwordUpdateFailed = true;
+  }
+
+  if (passwordUpdateFailed) {
+    redirect(
+      "/auth/reset-password?error=We+could+not+update+your+password.+Request+a+new+reset+link+and+try+again.",
+    );
+  }
+
+  redirect("/account?message=Your+password+has+been+updated.");
 }
