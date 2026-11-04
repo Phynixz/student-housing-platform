@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import AdminWorkspaceNav from "@/components/admin/AdminWorkspaceNav";
 import AdminPaymentsList from "@/components/admin/AdminPaymentsList";
 import { getPaymentProviderSetups } from "@/lib/data/admin-payments";
 
@@ -28,14 +27,7 @@ export default async function AdminPaymentsContent({
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
-      <Link
-        href="/admin/reviews"
-        className="text-sm font-semibold text-[var(--emerald)]"
-      >
-        ← Back to admin review
-      </Link>
-
-      <div className="ui-enter mt-6 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <div className="ui-enter flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-sm font-bold uppercase tracking-wide text-[var(--emerald)]">
             Payments
@@ -44,11 +36,13 @@ export default async function AdminPaymentsContent({
             Provider payout setup
           </h1>
           <p className="mt-4 max-w-2xl leading-7 text-[var(--muted)]">
-            Accommodation checkout is enabled only for verified providers with
-            an active Paystack subaccount. The platform never stores a
-            student&apos;s card or bank credentials.
+            This page records provider payout setup only. Student reservation
+            checkout and room holds are not available until the gateway flow is
+            ready.
           </p>
         </div>
+
+        <AdminWorkspaceNav current="payments" />
 
       </div>
 

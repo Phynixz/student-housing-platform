@@ -130,6 +130,8 @@ Need to review listings, manage verification states, handle reports, and keep ma
 - public Explore and property details use published Postgres properties
 - inspection requests persist and have student/provider status flows
 - student saved homes persist and can be compared
+- student portal profile, saved-home, and inspection activity
+- tenancy activation and room reservations are not yet implemented
 
 ### M8 — Verification and moderation
 **Status: implemented foundation; requires workflow testing**
@@ -139,6 +141,7 @@ Need to review listings, manage verification states, handle reports, and keep ma
 - publish/reject actions
 - reporting
 - audit history
+- admin operations overview with linked moderation, support, and payout queues
 
 ### Supporting pages and requests
 **Status: implemented in application code; support migration must be applied**
@@ -149,6 +152,7 @@ Need to review listings, manage verification states, handle reports, and keep ma
 
 ### M9 — Production launch
 
+- reservation/payment workflow with gateway-verified room holds
 - property photo Storage buckets and policies
 - analytics
 - performance

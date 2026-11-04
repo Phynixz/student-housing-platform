@@ -8,6 +8,8 @@ import {
   updateSupportRequestStatus,
   verifyProvider,
 } from "@/app/admin/reviews/actions";
+import AdminWorkspaceNav from "@/components/admin/AdminWorkspaceNav";
+import ActionSubmitButton from "@/components/ui/ActionSubmitButton";
 import {
   getAdminPropertyReports,
   getPendingPropertyReviews,
@@ -18,6 +20,7 @@ import { propertyImagePublicUrl } from "@/lib/property-images";
 
 interface AdminReviewContentProps {
   searchParams: Promise<{
+    error?: string;
     message?: string;
   }>;
 }
@@ -65,56 +68,72 @@ export default async function AdminReviewContent({
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-sm font-bold uppercase tracking-wide text-[var(--emerald)]">
-            Admin review
-          </p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight text-[var(--forest)]">
-            Property review queue
-          </h1>
-          <p className="mt-4 max-w-2xl leading-7 text-[var(--muted)]">
-            Verify providers and review submitted accommodation before it
-            becomes visible in the public marketplace.
-          </p>
-        </div>
-
-        <div className="grid gap-2 text-sm sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl bg-[var(--cream)] px-5 py-4">
-            <span className="font-bold text-[var(--forest)]">
-              {providersToVerify.length}
-            </span>{" "}
-            {providersToVerify.length === 1 ? "provider" : "providers"} awaiting verification
+      <div className="rounded-3xl bg-[var(--forest)] p-7 text-white sm:p-9">
+        <p className="text-sm font-bold uppercase tracking-[0.16em] text-[var(--gold)]">
+          Marketplace operations
+        </p>
+        <div className="mt-3 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)] lg:items-end">
+          <div>
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+              Trust, in the queue.
+            </h1>
+            <p className="mt-4 max-w-2xl leading-7 text-white/75">
+              Review who can list, what students see, and the reports that keep
+              accommodation information accountable.
+            </p>
           </div>
-          <div className="rounded-2xl bg-[var(--cream)] px-5 py-4">
-            <span className="font-bold text-[var(--forest)]">
-              {properties.length}
-            </span>{" "}
-            {properties.length === 1 ? "property" : "properties"} awaiting review
-          </div>
-          <div className="rounded-2xl bg-[var(--cream)] px-5 py-4">
-            <span className="font-bold text-[var(--forest)]">
-              {reports.length}
-            </span>{" "}
-            active {reports.length === 1 ? "report" : "reports"}
-          </div>
-          <div className="rounded-2xl bg-[var(--cream)] px-5 py-4">
-            <span className="font-bold text-[var(--forest)]">
-              {supportRequests.length}
-            </span>{" "}
-            active support {supportRequests.length === 1 ? "request" : "requests"}
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              {
+                href: "#providers",
+                label: "Providers",
+                count: providersToVerify.length,
+                detail: "verification",
+              },
+              {
+                href: "#properties",
+                label: "Listings",
+                count: properties.length,
+                detail: "to review",
+              },
+              {
+                href: "#reports",
+                label: "Reports",
+                count: reports.length,
+                detail: "active",
+              },
+              {
+                href: "#support",
+                label: "Support",
+                count: supportRequests.length,
+                detail: "active",
+              },
+            ].map((queue) => (
+              <a
+                key={queue.href}
+                href={queue.href}
+                className="group rounded-2xl border border-white/15 bg-white/10 p-4 transition hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]"
+              >
+                <span className="flex items-center justify-between gap-2 text-sm font-semibold text-white/80">
+                  {queue.label}
+                  <span
+                    aria-hidden="true"
+                    className="transition-transform group-hover:translate-x-1"
+                  >
+                    →
+                  </span>
+                </span>
+                <span className="mt-2 block text-3xl font-bold tabular-nums">
+                  {queue.count}
+                </span>
+                <span className="text-xs text-white/65">{queue.detail}</span>
+              </a>
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="mt-6">
-        <Link
-          href="/admin/payments"
-          className="inline-flex rounded-xl border border-[var(--border)] bg-white px-4 py-2.5 text-sm font-bold text-[var(--forest)]"
-        >
-          Open payment setup
-        </Link>
-      </div>
+      <AdminWorkspaceNav current="reviews" />
 
       {params.message ? (
         <div
@@ -124,13 +143,21 @@ export default async function AdminReviewContent({
           {params.message}
         </div>
       ) : null}
+      {params.error ? (
+        <div
+          role="alert"
+          className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-900"
+        >
+          {params.error}
+        </div>
+      ) : null}
 
-      <section className="mt-10">
+      <section id="reports" aria-labelledby="reports-title" className="mt-10 scroll-mt-28">
         <div>
           <p className="text-sm font-bold uppercase tracking-wide text-red-700">
             Listing reports
           </p>
-          <h2 className="mt-2 text-3xl font-bold text-[var(--forest)]">
+          <h2 id="reports-title" className="mt-2 text-3xl font-bold text-[var(--forest)]">
             Student trust and moderation
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">
@@ -197,26 +224,35 @@ export default async function AdminReviewContent({
                       <form action={updatePropertyReportStatus}>
                         <input type="hidden" name="reportId" value={report.id} />
                         <input type="hidden" name="status" value="reviewing" />
-                        <button className="rounded-xl bg-[var(--forest)] px-4 py-2.5 text-sm font-semibold text-white">
+                        <ActionSubmitButton
+                          pendingText="Opening review…"
+                          className="rounded-xl bg-[var(--forest)] px-4 py-2.5 text-sm font-semibold text-white"
+                        >
                           Start review
-                        </button>
+                        </ActionSubmitButton>
                       </form>
                     ) : null}
 
                     <form action={updatePropertyReportStatus}>
                       <input type="hidden" name="reportId" value={report.id} />
                       <input type="hidden" name="status" value="resolved" />
-                      <button className="rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-semibold text-emerald-800">
+                      <ActionSubmitButton
+                        pendingText="Resolving…"
+                        className="rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-semibold text-emerald-800"
+                      >
                         Resolve
-                      </button>
+                      </ActionSubmitButton>
                     </form>
 
                     <form action={updatePropertyReportStatus}>
                       <input type="hidden" name="reportId" value={report.id} />
                       <input type="hidden" name="status" value="dismissed" />
-                      <button className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--muted)]">
+                      <ActionSubmitButton
+                        pendingText="Dismissing…"
+                        className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--muted)]"
+                      >
                         Dismiss
-                      </button>
+                      </ActionSubmitButton>
                     </form>
                   </div>
                 </div>
@@ -226,12 +262,12 @@ export default async function AdminReviewContent({
         )}
       </section>
 
-      <section className="mt-10">
+      <section id="providers" aria-labelledby="providers-title" className="mt-10 scroll-mt-28">
         <div>
           <p className="text-sm font-bold uppercase tracking-wide text-[var(--emerald)]">
             Provider verification
           </p>
-          <h2 className="mt-2 text-3xl font-bold text-[var(--forest)]">
+          <h2 id="providers-title" className="mt-2 text-3xl font-bold text-[var(--forest)]">
             Registered landlords, agents and managers
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">
@@ -275,12 +311,12 @@ export default async function AdminReviewContent({
                     placeholder="Optional verification note"
                     className="w-full resize-y rounded-xl border border-[var(--border)] px-4 py-3 text-sm outline-none focus:border-[var(--emerald)]"
                   />
-                  <button
-                    type="submit"
+                  <ActionSubmitButton
+                    pendingText="Verifying provider…"
                     className="w-full rounded-xl bg-[var(--forest)] px-4 py-3 text-sm font-bold text-white"
                   >
                     Verify {provider.provider_type === "agent" ? "agent" : "provider"}
-                  </button>
+                  </ActionSubmitButton>
                 </form>
               </article>
             ))}
@@ -288,12 +324,12 @@ export default async function AdminReviewContent({
         )}
       </section>
 
-      <section className="mt-12">
+      <section id="support" aria-labelledby="support-title" className="mt-12 scroll-mt-28">
         <div>
           <p className="text-sm font-bold uppercase tracking-wide text-[var(--emerald)]">
             Support desk
           </p>
-          <h2 className="mt-2 text-3xl font-bold text-[var(--forest)]">
+          <h2 id="support-title" className="mt-2 text-3xl font-bold text-[var(--forest)]">
             Student and provider requests
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">
@@ -348,24 +384,33 @@ export default async function AdminReviewContent({
                       <form action={updateSupportRequestStatus}>
                         <input type="hidden" name="requestId" value={request.id} />
                         <input type="hidden" name="status" value="in_progress" />
-                        <button className="rounded-xl bg-[var(--forest)] px-4 py-2.5 text-sm font-semibold text-white">
+                        <ActionSubmitButton
+                          pendingText="Starting follow-up…"
+                          className="rounded-xl bg-[var(--forest)] px-4 py-2.5 text-sm font-semibold text-white"
+                        >
                           Start follow-up
-                        </button>
+                        </ActionSubmitButton>
                       </form>
                     ) : null}
                     <form action={updateSupportRequestStatus}>
                       <input type="hidden" name="requestId" value={request.id} />
                       <input type="hidden" name="status" value="resolved" />
-                      <button className="rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-semibold text-emerald-800">
+                      <ActionSubmitButton
+                        pendingText="Resolving…"
+                        className="rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-semibold text-emerald-800"
+                      >
                         Resolve
-                      </button>
+                      </ActionSubmitButton>
                     </form>
                     <form action={updateSupportRequestStatus}>
                       <input type="hidden" name="requestId" value={request.id} />
                       <input type="hidden" name="status" value="dismissed" />
-                      <button className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--muted)]">
+                      <ActionSubmitButton
+                        pendingText="Dismissing…"
+                        className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--muted)]"
+                      >
                         Dismiss
-                      </button>
+                      </ActionSubmitButton>
                     </form>
                   </div>
                 </div>
@@ -375,12 +420,12 @@ export default async function AdminReviewContent({
         )}
       </section>
 
-      <section className="mt-12">
+      <section id="properties" aria-labelledby="properties-title" className="mt-12 scroll-mt-28">
         <div>
           <p className="text-sm font-bold uppercase tracking-wide text-[var(--emerald)]">
             Property review
           </p>
-          <h2 className="mt-2 text-3xl font-bold text-[var(--forest)]">
+          <h2 id="properties-title" className="mt-2 text-3xl font-bold text-[var(--forest)]">
             Accommodation awaiting publication
           </h2>
         </div>
@@ -524,12 +569,12 @@ export default async function AdminReviewContent({
                           placeholder="Optional verification note"
                           className="w-full resize-y rounded-xl border border-[var(--border)] px-4 py-3 text-sm outline-none focus:border-[var(--emerald)]"
                         />
-                        <button
-                          type="submit"
+                        <ActionSubmitButton
+                          pendingText="Verifying provider…"
                           className="w-full rounded-xl bg-[var(--forest)] px-4 py-3 text-sm font-bold text-white"
                         >
                           Verify provider
-                        </button>
+                        </ActionSubmitButton>
                       </form>
                     ) : (
                       <p className="mt-4 text-sm font-semibold text-red-700">
@@ -559,13 +604,13 @@ export default async function AdminReviewContent({
                         placeholder="Optional approval note"
                         className="w-full resize-y rounded-xl border border-[var(--border)] px-4 py-3 text-sm outline-none focus:border-[var(--emerald)]"
                       />
-                      <button
-                        type="submit"
+                      <ActionSubmitButton
+                        pendingText="Publishing…"
                         disabled={!providerVerified}
                         className="w-full rounded-xl bg-[var(--gold)] px-4 py-3 text-sm font-bold text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-45"
                       >
                         Approve and publish
-                      </button>
+                      </ActionSubmitButton>
                     </form>
 
                     <form action={rejectProperty} className="mt-5 space-y-3 border-t border-[var(--border)] pt-5">
@@ -582,12 +627,12 @@ export default async function AdminReviewContent({
                         placeholder="Reason for rejection (required)"
                         className="w-full resize-y rounded-xl border border-red-200 px-4 py-3 text-sm outline-none focus:border-red-400"
                       />
-                      <button
-                        type="submit"
+                      <ActionSubmitButton
+                        pendingText="Rejecting…"
                         className="w-full rounded-xl border border-red-200 px-4 py-3 text-sm font-bold text-red-700"
                       >
                         Reject property
-                      </button>
+                      </ActionSubmitButton>
                     </form>
                   </section>
                 </div>
