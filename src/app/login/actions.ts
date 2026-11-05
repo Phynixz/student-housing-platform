@@ -79,13 +79,39 @@ function dashboardForRole(role: "student" | "provider" | "admin" | null) {
   return "/account";
 }
 
-async function authRedirectUrl(path: string, nextPath: string) {
+async function authRedirectUrl(
+  path: string,
+  nextPath: string,
+): Promise<string | null> {
   const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
 
   if (configuredSiteUrl) {
-    const url = new URL(path, configuredSiteUrl);
-    url.searchParams.set("next", nextPath);
-    return url.toString();
+    try {
+      const siteUrl = new URL(configuredSiteUrl);
+      const isLocalHost =
+        siteUrl.hostname === "localhost" ||
+        siteUrl.hostname === "127.0.0.1" ||
+        siteUrl.hostname === "[::1]" ||
+        siteUrl.hostname.endsWith(".localhost");
+
+      if (
+        !["http:", "https:"].includes(siteUrl.protocol) ||
+        (process.env.NODE_ENV === "production" &&
+          (siteUrl.protocol !== "https:" || isLocalHost))
+      ) {
+        return null;
+      }
+
+      const redirectUrl = new URL(path, siteUrl.origin);
+      redirectUrl.searchParams.set("next", nextPath);
+      return redirectUrl.toString();
+    } catch {
+      return null;
+    }
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    return null;
   }
 
   const requestHeaders = await headers();
@@ -109,6 +135,9 @@ async function authRedirectUrl(path: string, nextPath: string) {
 async function confirmationRedirectUrl(nextPath: string) {
   return authRedirectUrl("/auth/confirm", nextPath);
 }
+
+const productionRedirectConfigurationError =
+  "Account email links are not configured for this deployment. Set NEXT_PUBLIC_SITE_URL to the deployed app origin, then try again.";
 
 function submittedEmailError(email: string) {
   const validationError = emailValidationError(email);
@@ -267,6 +296,17 @@ export async function signup(formData: FormData) {
 
   const emailRedirectTo = await confirmationRedirectUrl(nextPath);
 
+  if (!emailRedirectTo) {
+    redirect(
+      signupRedirectUrl(
+        "error",
+        productionRedirectConfigurationError,
+        nextPath,
+        accountType,
+      ),
+    );
+  }
+
   const { session, error } = await signUpWithPassword(
     fullName,
     email,
@@ -302,6 +342,17 @@ export async function resendConfirmation(formData: FormData) {
   }
 
   const emailRedirectTo = await confirmationRedirectUrl(nextPath);
+
+  if (!emailRedirectTo) {
+    redirect(
+      checkEmailRedirectUrl(
+        email,
+        nextPath,
+        "error",
+        productionRedirectConfigurationError,
+      ),
+    );
+  }
   const { error } = await resendSignupConfirmation(email, emailRedirectTo);
 
   if (error) {
@@ -334,6 +385,15 @@ export async function requestPasswordReset(formData: FormData) {
   }
 
   const redirectTo = await authRedirectUrl("/auth/recover", "/auth/reset-password");
+
+  if (!redirectTo) {
+    redirect(
+      `/auth/forgot-password?error=${encodeURIComponent(
+        productionRedirectConfigurationError,
+      )}`,
+    );
+  }
+
   let recoveryFailed = false;
 
   try {

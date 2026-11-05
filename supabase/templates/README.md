@@ -23,13 +23,19 @@ The template uses Supabase's `{{ .ConfirmationURL }}` variable. Keep this variab
 
 In **Authentication → URL Configuration**:
 
-- Set **Site URL** to the actual deployed application URL once the app is deployed.
-- Add the deployed confirmation route, for example `https://YOUR-DOMAIN/auth/confirm`, to the allowed redirect URLs.
-- Keep `http://localhost:3000/auth/confirm` in the allowlist for local desktop development.
+- Set **Site URL** to the deployed app origin, for example `https://YOUR-DOMAIN` (do not include `/login`).
+- Add the deployed app origin and callback routes to **Redirect URLs**, for example `https://YOUR-DOMAIN/**`. Keep `http://localhost:3000/**` for local desktop development only.
 
 Do not use `localhost` as the production Site URL. A confirmation link opened on a phone cannot reach the developer's computer through `localhost`.
 
-The application also uses `NEXT_PUBLIC_SITE_URL` when constructing confirmation redirects. Set it to the same deployed application origin in the hosting provider's environment variables.
+The application constructs confirmation and recovery redirects using `NEXT_PUBLIC_SITE_URL`. For each deployed environment, set it to that deployment's HTTPS origin in the hosting provider's environment settings, such as `https://YOUR-DOMAIN` (not `https://YOUR-DOMAIN/login`). Production sign-up and password recovery fail with a configuration message rather than sending a localhost link if this value is missing or invalid.
+
+The application reads the Supabase project settings using these exact variable names:
+
+- `NEXT_PUBLIC_SUPABASE_URL`: the Project URL from the same Supabase project.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: that project's publishable key.
+
+Set both in the hosting provider's build environment, and make sure they refer to the Supabase project where you configured the Site URL and Redirect URLs. Next.js inlines `NEXT_PUBLIC_` variables during the build, so redeploy after changing them.
 
 ## Configure real email delivery before public launch
 
