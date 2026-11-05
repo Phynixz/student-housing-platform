@@ -265,6 +265,66 @@ export async function resendSignupConfirmation(
   return { error: null };
 }
 
+export async function requestPasswordRecovery(
+  email: string,
+  emailRedirectTo?: string,
+) {
+  const recoveryUrl = new URL(`${supabasePublicConfig.url}/auth/v1/recover`);
+
+  if (emailRedirectTo) {
+    recoveryUrl.searchParams.set("redirect_to", emailRedirectTo);
+  }
+
+  const response = await fetch(recoveryUrl, {
+    method: "POST",
+    headers: {
+      apikey: supabasePublicConfig.publishableKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email }),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const payload = await readAuthPayload(response);
+
+    return {
+      error: authErrorMessage(payload, "Unable to request a password reset."),
+    };
+  }
+
+  return { error: null };
+}
+
+export async function updateCurrentUserPassword(password: string) {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    return { error: "Your password reset session has expired." };
+  }
+
+  const response = await fetch(`${supabasePublicConfig.url}/auth/v1/user`, {
+    method: "PUT",
+    headers: {
+      apikey: supabasePublicConfig.publishableKey,
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ password }),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const payload = await readAuthPayload(response);
+
+    return {
+      error: authErrorMessage(payload, "Unable to update your password."),
+    };
+  }
+
+  return { error: null };
+}
+
 export async function signOutCurrentUser() {
   const accessToken = await getAccessToken();
 

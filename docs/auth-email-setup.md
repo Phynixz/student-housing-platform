@@ -64,3 +64,30 @@ Do not put SMTP credentials in the Next.js frontend, a `NEXT_PUBLIC_` variable, 
 - Confirm the user is signed in and lands in the intended workspace.
 - Test the resend button and verify it uses the same redirect destination.
 - Test an address outside the Supabase team after custom SMTP is configured.
+
+## 6. Configure password recovery
+
+The login page links to `/auth/forgot-password`. Supabase sends a recovery email
+back to `/auth/recover`, where the application adopts the verified recovery
+session and lets the user choose a new password.
+
+In Supabase Dashboard, open **Authentication → URL Configuration** and make
+sure the local and deployed app URLs are allowed:
+
+- `http://localhost:3000/**`
+- `https://your-public-domain.example/**`
+
+In **Authentication → Email Templates → Reset Password**, keep the Supabase
+confirmation link variable intact. Use the same verified SMTP sender configured
+for signup emails.
+
+Test with an account you control:
+
+1. Select **Forgot your password?** from sign in and request a reset.
+2. Open the link in the same browser where the app is running.
+3. Confirm the reset page opens, the password can be changed, and the new
+   password works at sign in.
+4. Reopen the same link and confirm an expired or used link cannot reset the
+   password again.
+
+Never paste recovery URLs or tokens into support messages or source control.
