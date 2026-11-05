@@ -6,6 +6,7 @@ export type AccountType = "student" | "provider";
 export interface SupabaseAuthUser {
   id: string;
   email?: string;
+  email_confirmed_at?: string | null;
   user_metadata?: {
     full_name?: string;
     account_type?: AccountType;

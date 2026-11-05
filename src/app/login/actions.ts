@@ -57,6 +57,7 @@ function checkEmailRedirectUrl(
   nextPath: string,
   type?: "error" | "message",
   message?: string,
+  setupRequired = false,
 ) {
   const params = new URLSearchParams({
     email,
@@ -65,6 +66,10 @@ function checkEmailRedirectUrl(
 
   if (type && message) {
     params.set(type, message);
+  }
+
+  if (setupRequired) {
+    params.set("setup", "required");
   }
 
   return `/auth/check-email?${params.toString()}`;
@@ -335,7 +340,7 @@ export async function signup(formData: FormData) {
     );
   }
 
-  const { session, error } = await signUpWithPassword(
+  const { session, user, error } = await signUpWithPassword(
     fullName,
     email,
     password,
@@ -354,11 +359,26 @@ export async function signup(formData: FormData) {
     );
   }
 
-  if (session) {
-    redirect(nextPath);
+  if (session || user?.email_confirmed_at) {
+    redirect(
+      checkEmailRedirectUrl(
+        email,
+        nextPath,
+        "error",
+        "Email confirmation is disabled for this project. The site administrator must enable email confirmations in Supabase before accounts can be verified.",
+        true,
+      ),
+    );
   }
 
-  redirect(checkEmailRedirectUrl(email, nextPath));
+  redirect(
+    checkEmailRedirectUrl(
+      email,
+      nextPath,
+      "message",
+      "Your account was created. We sent a verification link to your email address.",
+    ),
+  );
 }
 
 export async function resendConfirmation(formData: FormData) {
