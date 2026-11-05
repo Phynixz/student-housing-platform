@@ -24,9 +24,12 @@ verified session in HTTP-only cookies.
 ## Sign in and sign up
 
 Sign in and sign up have separate routes and focused forms. New users choose a student or provider
-account type during sign up; account actions return validation errors to the matching form and
-preserve the intended destination. Both pages provide pending feedback, accessible focus states,
-and reduced-motion-aware loading and entrance effects.
+account type during sign up. That choice is stored as account metadata to resume provider onboarding
+if needed; the database role remains the authorization source. Student accounts go to the student
+portal, while provider access begins after provider onboarding creates a provider record. Account
+actions return validation errors to the matching form and preserve valid intended destinations.
+Both pages provide pending feedback, accessible focus states, and reduced-motion-aware loading and
+entrance effects.
 
 ## Support and policies
 

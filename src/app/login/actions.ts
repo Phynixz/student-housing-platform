@@ -16,7 +16,10 @@ import {
   signUpWithPassword,
   updateCurrentUserPassword,
 } from "@/lib/supabase/auth-server";
-import { safeNextPath } from "@/lib/supabase/auth-shared";
+import {
+  type AccountType,
+  safeNextPath,
+} from "@/lib/supabase/auth-shared";
 
 function loginRedirectUrl(
   type: "error" | "message",
@@ -77,6 +80,26 @@ function dashboardForRole(role: "student" | "provider" | "admin" | null) {
   }
 
   return "/account";
+}
+
+function loginDestination(
+  nextPath: string,
+  role: "student" | "provider" | "admin" | null,
+  accountType: AccountType,
+) {
+  if (nextPath !== "/explore" && nextPath !== "/account") {
+    return nextPath;
+  }
+
+  if (role === "provider" || role === "admin") {
+    return dashboardForRole(role);
+  }
+
+  if (accountType === "provider") {
+    return "/provider/onboarding?next=/list-property";
+  }
+
+  return dashboardForRole(role);
 }
 
 async function authRedirectUrl(
@@ -212,7 +235,7 @@ export async function login(formData: FormData) {
     redirect(loginRedirectUrl("error", "Enter your password.", nextPath));
   }
 
-  const { error } = await signInWithPassword(email, password);
+  const { session, error } = await signInWithPassword(email, password);
 
   if (error) {
     redirect(
@@ -224,12 +247,14 @@ export async function login(formData: FormData) {
     );
   }
 
-  if (nextPath !== "/explore") {
-    redirect(nextPath);
-  }
-
   const { profile } = await getCurrentAccount();
-  redirect(dashboardForRole(profile?.role ?? null));
+  const accountType =
+    session?.user.user_metadata?.account_type === "provider"
+      ? "provider"
+      : "student";
+  redirect(
+    loginDestination(nextPath, profile?.role ?? null, accountType),
+  );
 }
 
 export async function signup(formData: FormData) {
@@ -239,12 +264,15 @@ export async function signup(formData: FormData) {
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
   const requestedNextPath = safeNextPath(formData.get("next"));
   const accountType = String(formData.get("accountType") ?? "student");
+  const isPortalPath = ["/explore", "/account", "/list-property"].includes(
+    requestedNextPath,
+  );
   const nextPath =
-    requestedNextPath === "/explore"
-      ? accountType === "provider"
-        ? "/provider/onboarding?next=/list-property"
-        : "/account"
-      : requestedNextPath;
+    accountType === "provider" && isPortalPath
+      ? "/provider/onboarding?next=/list-property"
+      : requestedNextPath === "/explore"
+        ? "/account"
+        : requestedNextPath;
   const emailError = submittedEmailError(email);
 
   if (accountType !== "student" && accountType !== "provider") {
@@ -311,6 +339,7 @@ export async function signup(formData: FormData) {
     fullName,
     email,
     password,
+    accountType,
     emailRedirectTo,
   );
 

@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
+  type AccountType,
   type SupabaseAuthSession,
   type SupabaseAuthUser,
 } from "@/lib/supabase/auth-shared";
@@ -171,6 +172,7 @@ export async function signUpWithPassword(
   fullName: string,
   email: string,
   password: string,
+  accountType: AccountType,
   emailRedirectTo?: string,
 ) {
   const signupUrl = new URL(`${supabasePublicConfig.url}/auth/v1/signup`);
@@ -190,6 +192,7 @@ export async function signUpWithPassword(
       password,
       data: {
         full_name: fullName,
+        account_type: accountType,
       },
     }),
     cache: "no-store",
