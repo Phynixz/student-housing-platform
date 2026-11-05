@@ -39,7 +39,7 @@ available as clearly labeled drafts pending operator and legal review.
 
 ## Provider listing
 
-Provider entry → account → identity/contact verification → property details → photos/facilities/pricing → location → submit for review → admin decision → publish.
+Provider entry → sign in or create account → provider onboarding → property details → photos/facilities/pricing → location → submit for review → admin decision → publish. Listing forms are not available to guests; public listing information remains viewable without an account.
 
 ## Admin verification
 
