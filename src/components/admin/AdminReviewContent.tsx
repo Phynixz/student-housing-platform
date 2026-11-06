@@ -8,7 +8,6 @@ import {
   updateSupportRequestStatus,
   verifyProvider,
 } from "@/app/admin/reviews/actions";
-import AdminWorkspaceNav from "@/components/admin/AdminWorkspaceNav";
 import ActionSubmitButton from "@/components/ui/ActionSubmitButton";
 import {
   getAdminPropertyReports,
@@ -61,7 +60,7 @@ export default async function AdminReviewContent({
   searchParams,
 }: AdminReviewContentProps) {
   if (!isSupabaseSecretKeyConfigured()) {
-    return <AdminDataUnavailable current="reviews" />;
+    return <AdminDataUnavailable section="Review queues" />;
   }
 
   const [properties, providersToVerify, reports, supportRequests, params] = await Promise.all([
@@ -138,8 +137,6 @@ export default async function AdminReviewContent({
           </div>
         </div>
       </div>
-
-      <AdminWorkspaceNav current="reviews" />
 
       {params.message ? (
         <div

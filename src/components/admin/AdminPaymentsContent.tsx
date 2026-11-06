@@ -1,4 +1,3 @@
-import AdminWorkspaceNav from "@/components/admin/AdminWorkspaceNav";
 import AdminPaymentsList from "@/components/admin/AdminPaymentsList";
 import AdminDataUnavailable from "@/components/admin/AdminDataUnavailable";
 import { getPaymentProviderSetups } from "@/lib/data/admin-payments";
@@ -14,7 +13,7 @@ export default async function AdminPaymentsContent({
   searchParams,
 }: AdminPaymentsContentProps) {
   if (!isSupabaseSecretKeyConfigured()) {
-    return <AdminDataUnavailable current="payments" />;
+    return <AdminDataUnavailable section="Payout setup" />;
   }
 
   const [providers, params] = await Promise.all([
@@ -47,8 +46,6 @@ export default async function AdminPaymentsContent({
             ready.
           </p>
         </div>
-
-        <AdminWorkspaceNav current="payments" />
 
       </div>
 
