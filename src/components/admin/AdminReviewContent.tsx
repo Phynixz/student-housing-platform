@@ -17,6 +17,8 @@ import {
   getAdminSupportRequests,
 } from "@/lib/data/admin";
 import { propertyImagePublicUrl } from "@/lib/property-images";
+import { isSupabaseSecretKeyConfigured } from "@/lib/supabase/secret-rest";
+import AdminDataUnavailable from "@/components/admin/AdminDataUnavailable";
 
 interface AdminReviewContentProps {
   searchParams: Promise<{
@@ -58,6 +60,10 @@ function supportCategoryLabel(value: string) {
 export default async function AdminReviewContent({
   searchParams,
 }: AdminReviewContentProps) {
+  if (!isSupabaseSecretKeyConfigured()) {
+    return <AdminDataUnavailable current="reviews" />;
+  }
+
   const [properties, providersToVerify, reports, supportRequests, params] = await Promise.all([
     getPendingPropertyReviews(),
     getPendingProviderVerifications(),
