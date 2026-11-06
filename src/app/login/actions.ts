@@ -87,21 +87,67 @@ function dashboardForRole(role: "student" | "provider" | "admin" | null) {
   return "/account";
 }
 
+function isProviderPath(path: string) {
+  return path === "/list-property" ||
+    path.startsWith("/list-property/") ||
+    path === "/provider" ||
+    path.startsWith("/provider/");
+}
+
+function signupDestination(
+  accountType: AccountType,
+  requestedPath: string,
+) {
+  if (accountType === "student") {
+    if (isProviderPath(requestedPath)) {
+      return "/account";
+    }
+
+    return requestedPath === "/explore" ? "/account" : requestedPath;
+  }
+
+  if (requestedPath.startsWith("/provider/onboarding")) {
+    return requestedPath;
+  }
+
+  if (isProviderPath(requestedPath)) {
+    return `/provider/onboarding?next=${encodeURIComponent(requestedPath)}`;
+  }
+
+  if (requestedPath === "/explore" || requestedPath === "/account") {
+    return "/provider/onboarding?next=/list-property";
+  }
+
+  return requestedPath;
+}
+
 function loginDestination(
   nextPath: string,
   role: "student" | "provider" | "admin" | null,
   accountType: AccountType,
 ) {
-  if (nextPath !== "/explore" && nextPath !== "/account") {
-    return nextPath;
+  if (role === "admin") {
+    return nextPath === "/explore" || nextPath === "/account"
+      ? dashboardForRole(role)
+      : nextPath;
   }
 
-  if (role === "provider" || role === "admin") {
-    return dashboardForRole(role);
+  if (role === "provider") {
+    return nextPath === "/explore" || nextPath === "/account"
+      ? dashboardForRole(role)
+      : nextPath;
   }
 
   if (accountType === "provider") {
-    return "/provider/onboarding?next=/list-property";
+    return signupDestination(accountType, nextPath);
+  }
+
+  if (isProviderPath(nextPath)) {
+    return "/account";
+  }
+
+  if (nextPath !== "/explore" && nextPath !== "/account") {
+    return nextPath;
   }
 
   return dashboardForRole(role);
@@ -268,16 +314,11 @@ export async function signup(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
   const requestedNextPath = safeNextPath(formData.get("next"));
-  const accountType = String(formData.get("accountType") ?? "student");
-  const isPortalPath = ["/explore", "/account", "/list-property"].includes(
-    requestedNextPath,
-  );
+  const accountType = String(formData.get("accountType") ?? "");
   const nextPath =
-    accountType === "provider" && isPortalPath
-      ? "/provider/onboarding?next=/list-property"
-      : requestedNextPath === "/explore"
-        ? "/account"
-        : requestedNextPath;
+    accountType === "student" || accountType === "provider"
+      ? signupDestination(accountType, requestedNextPath)
+      : requestedNextPath;
   const emailError = submittedEmailError(email);
 
   if (accountType !== "student" && accountType !== "provider") {

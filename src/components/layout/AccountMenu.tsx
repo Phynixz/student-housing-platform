@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { signOut } from "@/app/auth/actions";
+import AccountRoleIcon from "@/components/layout/AccountRoleIcon";
 
 interface AccountMenuProps {
   email: string;
@@ -11,14 +12,14 @@ interface AccountMenuProps {
 
 function roleLabel(role: AccountMenuProps["role"]) {
   if (role === "provider") {
-    return "Property provider";
+    return "Landlord";
   }
 
   if (role === "admin") {
     return "Platform administrator";
   }
 
-  return "Student account";
+  return "Tenant";
 }
 
 function accountDestination(role: AccountMenuProps["role"]) {
@@ -27,10 +28,10 @@ function accountDestination(role: AccountMenuProps["role"]) {
   }
 
   if (role === "provider") {
-    return { href: "/list-property", label: "Provider workspace" };
+    return { href: "/list-property", label: "Landlord workspace" };
   }
 
-  return { href: "/account", label: "Student portal" };
+  return { href: "/account", label: "Tenant portal" };
 }
 
 function initials(name: string, email: string) {
@@ -62,8 +63,13 @@ export default function AccountMenu({
           {initials(name, email)}
           <span
             aria-hidden="true"
-            className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-white bg-emerald-400"
-          />
+            className="absolute -bottom-1 -right-1 grid size-5 place-items-center rounded-full border-2 border-white bg-[var(--gold)] text-[var(--forest)]"
+          >
+            <AccountRoleIcon
+              role={role ?? "student"}
+              className="size-3"
+            />
+          </span>
         </span>
         {!compact ? (
           <>
