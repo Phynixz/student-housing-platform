@@ -10,6 +10,7 @@ import {
 } from "@/lib/auth/email-validation";
 import { getCurrentAccount } from "@/lib/data/account";
 import {
+  clearAuthSession,
   resendSignupConfirmation,
   requestPasswordRecovery,
   signInWithPassword,
@@ -299,6 +300,11 @@ export async function login(formData: FormData) {
   }
 
   const { profile } = await getCurrentAccount();
+  if (profile?.role === "admin") {
+    await clearAuthSession();
+    redirect("/admin/sign-in?message=Use+the+admin+sign-in+page.");
+  }
+
   const accountType =
     session?.user.user_metadata?.account_type === "provider"
       ? "provider"
