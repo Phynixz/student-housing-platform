@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { signOut } from "@/app/auth/actions";
+import AccountRoleIcon from "@/components/layout/AccountRoleIcon";
 
 interface MobileMenuProps {
   isAuthenticated: boolean;
@@ -18,10 +19,22 @@ function accountDestination(role: MobileMenuProps["role"]) {
   }
 
   if (role === "provider") {
-    return { href: "/list-property", label: "Provider dashboard" };
+    return { href: "/list-property", label: "Landlord workspace" };
   }
 
-  return { href: "/account", label: "My account" };
+  return { href: "/account", label: "Tenant portal" };
+}
+
+function roleLabel(role: MobileMenuProps["role"]) {
+  if (role === "provider") {
+    return "Landlord account";
+  }
+
+  if (role === "admin") {
+    return "Administrator account";
+  }
+
+  return "Tenant account";
 }
 
 export default function MobileMenu({
@@ -52,13 +65,19 @@ export default function MobileMenu({
 
         <span className="flex items-center gap-2" aria-hidden="true">
           {isAuthenticated ? (
-            <span className="grid size-8 place-items-center rounded-full bg-[var(--forest)] text-xs font-bold text-white">
+            <span className="relative grid size-8 place-items-center rounded-full bg-[var(--forest)] text-xs font-bold text-white">
               {(name.trim() || email.split("@")[0] || "?")
                 .split(/[\s._-]+/)
                 .filter(Boolean)
                 .slice(0, 2)
                 .map((part) => part[0]?.toUpperCase())
                 .join("")}
+              <span aria-hidden="true" className="absolute -bottom-1 -right-1 grid size-4 place-items-center rounded-full border-2 border-white bg-[var(--gold)] text-[var(--forest)]">
+                <AccountRoleIcon
+                  role={role ?? "student"}
+                  className="size-2.5"
+                />
+              </span>
             </span>
           ) : null}
           <span className="text-xl leading-none">{isOpen ? "×" : "☰"}</span>
@@ -79,6 +98,9 @@ export default function MobileMenu({
                 </p>
                 <p className="mt-1 break-all text-xs text-[var(--muted)]">
                   {email}
+                </p>
+                <p className="mt-2 text-[11px] font-bold uppercase tracking-wide text-[var(--emerald)]">
+                  {roleLabel(role)}
                 </p>
               </div>
             ) : null}

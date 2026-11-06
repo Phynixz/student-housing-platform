@@ -9,7 +9,12 @@ export default async function HeaderAccountControls() {
   const name =
     profile?.full_name?.trim() || user?.user_metadata?.full_name || "";
   const email = user?.email ?? "";
-  const role = profile?.role ?? null;
+  const role =
+    profile?.role === "admin" || profile?.role === "provider"
+      ? profile.role
+      : user?.user_metadata?.account_type === "provider"
+        ? "provider"
+        : profile?.role ?? null;
 
   return (
     <>

@@ -23,13 +23,14 @@ verified session in HTTP-only cookies.
 
 ## Sign in and sign up
 
-Sign in and sign up have separate routes and focused forms. New users choose a student or provider
-account type during sign up. That choice is stored as account metadata to resume provider onboarding
-if needed; the database role remains the authorization source. Student accounts go to the student
-portal, while provider access begins after provider onboarding creates a provider record. Account
-actions return validation errors to the matching form and preserve valid intended destinations.
-Both pages provide pending feedback, accessible focus states, and reduced-motion-aware loading and
-entrance effects.
+Sign in and sign up have separate routes and focused forms. Signup first asks the user to choose
+Tenant or Landlord, then collects account details. Those choices map to student or provider account
+metadata respectively. Tenant sign-in routes to the student portal; Landlord sign-in resumes
+provider onboarding until a provider record exists, then routes to the landlord workspace. The
+database role remains the authorization source. The account menu identifies the signed-in role with
+a matching icon and portal link. Account actions return validation errors to the matching form and
+preserve valid intended destinations. Both pages provide pending feedback, accessible focus states,
+and reduced-motion-aware loading and entrance effects.
 
 ## Support and policies
 
