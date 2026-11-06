@@ -21,7 +21,7 @@ export default function ProviderEntryContent({
             Put a property in front of students with clearer information.
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--muted)]">
-            Create an account and provider profile first, then add your
+            Create one landlord login, finish its profile, and then add your
             property details, pricing, room availability and facilities.
             Listings stay private until approved through platform review.
           </p>
@@ -39,14 +39,14 @@ export default function ProviderEntryContent({
                 href="/signup?accountType=provider&next=/list-property/start"
                 className="rounded-xl bg-[var(--forest)] px-5 py-3 text-sm font-semibold text-white"
               >
-                Create a provider account
+                Create a landlord account
               </Link>
             ) : (
               <Link
                 href="/provider/onboarding?next=/list-property/start"
                 className="rounded-xl bg-[var(--forest)] px-5 py-3 text-sm font-semibold text-white"
               >
-                Set up your provider profile
+                Set up your landlord profile
               </Link>
             )}
 
@@ -73,11 +73,11 @@ export default function ProviderEntryContent({
               </span>
               <div>
                 <p className="font-bold text-[var(--forest)]">
-                  Create an account and provider profile
+                  Create a landlord account
                 </p>
                 <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-                  Sign in or create an account first. Provider onboarding
-                  creates the profile used to manage listings.
+                  Choose Landlord and create your login. Add a name to that
+                  same account—there is no separate provider account.
                 </p>
               </div>
             </li>
@@ -91,8 +91,8 @@ export default function ProviderEntryContent({
                   Add property details
                 </p>
                 <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-                  Once your provider profile is ready, add location, rooms,
-                  pricing, availability and amenities.
+                  Add location, rooms, pricing, availability and amenities in
+                  your landlord workspace.
                 </p>
               </div>
             </li>
