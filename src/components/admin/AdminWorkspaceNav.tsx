@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { adminSignOut } from "@/app/admin/sign-in/actions";
+
 type AdminWorkspaceSection = "reviews" | "payments";
 
 interface AdminWorkspaceNavProps {
@@ -52,6 +54,14 @@ export default function AdminWorkspaceNav({
       >
         Payout setup
       </Link>
+      <form action={adminSignOut} className="ml-auto">
+        <button
+          type="submit"
+          className="shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
+        >
+          Sign out
+        </button>
+      </form>
     </nav>
   );
 }
