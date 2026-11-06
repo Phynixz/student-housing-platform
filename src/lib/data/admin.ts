@@ -2,6 +2,7 @@ import "server-only";
 
 import { redirect } from "next/navigation";
 
+import { normalizeEmail } from "@/lib/auth/email-validation";
 import { getCurrentUser } from "@/lib/supabase/auth-server";
 import { supabaseAuthenticatedRest } from "@/lib/supabase/authenticated-rest";
 import type { Tables } from "@/types/database";
@@ -73,7 +74,7 @@ export async function requireAdmin(nextPath = "/admin/reviews") {
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect(`/login?next=${encodeURIComponent(nextPath)}`);
+    redirect(`/admin/sign-in?next=${encodeURIComponent(nextPath)}`);
   }
 
   const profiles = await supabaseAuthenticatedRest<AdminProfile[]>(
@@ -81,8 +82,16 @@ export async function requireAdmin(nextPath = "/admin/reviews") {
   );
 
   const profile = profiles[0] ?? null;
+  const configuredAdminEmail = normalizeEmail(
+    process.env.ADMIN_LOGIN_EMAIL,
+  );
 
-  if (!profile || profile.role !== "admin") {
+  if (
+    !configuredAdminEmail ||
+    normalizeEmail(user.email) !== configuredAdminEmail ||
+    !profile ||
+    profile.role !== "admin"
+  ) {
     redirect("/explore");
   }
 

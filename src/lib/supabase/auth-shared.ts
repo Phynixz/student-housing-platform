@@ -33,3 +33,15 @@ export function safeNextPath(value: FormDataEntryValue | string | null | undefin
 
   return value;
 }
+
+export function safeAdminNextPath(
+  value: FormDataEntryValue | string | null | undefined,
+) {
+  const path = safeNextPath(value);
+
+  if (!path.startsWith("/admin/") || path === "/admin/sign-in") {
+    return "/admin/reviews";
+  }
+
+  return path;
+}
